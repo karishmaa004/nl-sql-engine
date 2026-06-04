@@ -1,4 +1,7 @@
 import streamlit as st
+import os
+
+os.makedirs("data", exist_ok=True)
 import sqlite3
 import pandas as pd
 import time
@@ -542,125 +545,72 @@ with col_input:
 with col_btn:
     run = st.button("Run \u2192", use_container_width=True)
 
-# Inject ghost-text JS — targets the real Streamlit input directly in same document
-sug_json = json.dumps(SUGGESTIONS)
-st.markdown(f"""
+# Rotating animated placeholder via CSS keyframes
+st.markdown("""
 <style>
-.autocomplete-ghost {{
+@keyframes ph1  { 0%,16%{opacity:1} 17%,100%{opacity:0} }
+@keyframes ph2  { 0%,16%{opacity:0} 17%,33%{opacity:1} 34%,100%{opacity:0} }
+@keyframes ph3  { 0%,33%{opacity:0} 34%,50%{opacity:1} 51%,100%{opacity:0} }
+@keyframes ph4  { 0%,50%{opacity:0} 51%,67%{opacity:1} 68%,100%{opacity:0} }
+@keyframes ph5  { 0%,67%{opacity:0} 68%,84%{opacity:1} 85%,100%{opacity:0} }
+@keyframes ph6  { 0%,84%{opacity:0} 85%,100%{opacity:1} }
+
+.ph-wrap {
+    position: relative;
+    pointer-events: none;
+    height: 0;
+    overflow: visible;
+}
+.ph-line {
     position: absolute;
-    top: 0; left: 0;
-    padding: 0.7rem 1rem;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    padding: 0 1rem;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.88rem;
-    pointer-events: none;
+    color: rgba(90,106,133,0.55);
     white-space: nowrap;
     overflow: hidden;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-}}
-.ghost-typed {{ color: transparent; }}
-.ghost-rest  {{ color: rgba(90,106,133,0.6); }}
-.tab-badge {{
-    position: absolute;
-    right: 12px; top: 50%; transform: translateY(-50%);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.58rem; letter-spacing: 0.12em;
-    color: rgba(0,229,160,0.55);
-    background: rgba(0,229,160,0.08);
-    border: 1px solid rgba(0,229,160,0.2);
-    padding: 2px 7px; border-radius: 4px;
-    pointer-events: none; display: none;
-    z-index: 11;
-}}
+    opacity: 0;
+    animation-duration: 18s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+    pointer-events: none;
+    z-index: 100;
+}
+.ph1 { animation-name: ph1; }
+.ph2 { animation-name: ph2; }
+.ph3 { animation-name: ph3; }
+.ph4 { animation-name: ph4; }
+.ph5 { animation-name: ph5; }
+.ph6 { animation-name: ph6; }
 </style>
-<script>
-(function() {{
-  var SUGGESTIONS = {sug_json};
-  var ghost, badge, targetInput;
-  var current = '';
-
-  function match(val) {{
-    if (!val) return '';
-    var l = val.toLowerCase();
-    for (var i = 0; i < SUGGESTIONS.length; i++) {{
-      if (SUGGESTIONS[i].toLowerCase().startsWith(l)) return SUGGESTIONS[i];
-    }}
-    return '';
-  }}
-
-  function setup() {{
-    // Find the Streamlit text input in the SAME document
-    var inputs = document.querySelectorAll('input[type="text"]');
-    if (!inputs.length) {{ setTimeout(setup, 200); return; }}
-
-    // Pick the query input (last one or the one with our placeholder)
-    targetInput = inputs[inputs.length - 1];
-    for (var i = 0; i < inputs.length; i++) {{
-      if (inputs[i].placeholder && inputs[i].placeholder.indexOf('employees') > -1) {{
-        targetInput = inputs[i]; break;
-      }}
-    }}
-
-    // Wrap input in a relative container if not already
-    var wrapper = targetInput.parentElement;
-    if (wrapper.style.position !== 'relative') wrapper.style.position = 'relative';
-
-    // Create ghost overlay
-    ghost = document.createElement('div');
-    ghost.className = 'autocomplete-ghost';
-    ghost.innerHTML = '<span class="ghost-typed" id="gt"></span><span class="ghost-rest" id="gr"></span>';
-    wrapper.appendChild(ghost);
-
-    // Create TAB badge
-    badge = document.createElement('span');
-    badge.className = 'tab-badge';
-    badge.textContent = 'TAB';
-    wrapper.appendChild(badge);
-
-    targetInput.addEventListener('input', updateGhost);
-    targetInput.addEventListener('keydown', function(e) {{
-      if (e.key === 'Tab' && current) {{
-        e.preventDefault();
-        // Set value using native setter so React picks it up
-        var nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-        nativeSetter.call(targetInput, current);
-        targetInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        current = '';
-        updateGhost();
-      }}
-    }});
-
-    updateGhost();
-  }}
-
-  function updateGhost() {{
-    var val = targetInput.value;
-    current = match(val);
-    var gt = document.getElementById('gt');
-    var gr = document.getElementById('gr');
-    if (!gt || !gr) return;
-    if (current && val) {{
-      gt.textContent = current.slice(0, val.length);
-      gr.textContent = current.slice(val.length);
-      badge.style.display = 'block';
-    }} else {{
-      gt.textContent = '';
-      gr.textContent = '';
-      badge.style.display = 'none';
-    }}
-  }}
-
-  if (document.readyState === 'loading') {{
-    document.addEventListener('DOMContentLoaded', setup);
-  }} else {{
-    setTimeout(setup, 300);
-  }}
-}})();
-</script>
+<div class="ph-wrap">
+  <div class="ph-line ph1">e.g.&nbsp;&nbsp;Show me the top 5 employees by salary</div>
+  <div class="ph-line ph2">e.g.&nbsp;&nbsp;Average salary by department</div>
+  <div class="ph-line ph3">e.g.&nbsp;&nbsp;Who is the highest paid employee?</div>
+  <div class="ph-line ph4">e.g.&nbsp;&nbsp;Count of employees per department</div>
+  <div class="ph-line ph5">e.g.&nbsp;&nbsp;Show all Engineering employees</div>
+  <div class="ph-line ph6">e.g.&nbsp;&nbsp;Employees earning more than 50000</div>
+</div>
 """, unsafe_allow_html=True)
+
+# Dropdown suggestion list via selectbox hidden as a hint
+if question:
+    matches = [s for s in SUGGESTIONS if s.lower().startswith(question.lower())]
+    if matches and question.lower() != matches[0].lower():
+        rows_html = ""
+        for i, m in enumerate(matches[:4]):
+            color = "#00e5a0" if i == 0 else "#5a6a85"
+            bold_part = "<b style='color:#00e5a0'>" + m[:len(question)] + "</b>"
+            rest_part = m[len(question):]
+            rows_html += "<div style='padding:0.5rem 1rem;font-size:0.82rem;color:" + color + ";border-bottom:1px solid #1e2535;'>" + bold_part + rest_part + "</div>"
+        dropdown_html = "<div style='margin-top:-8px;margin-bottom:4px;background:#111620;border:1px solid #1e2535;border-radius:0 0 8px 8px;font-family:IBM Plex Mono,monospace;overflow:hidden;'>" + rows_html + "</div>"
+        st.markdown(dropdown_html, unsafe_allow_html=True)
+        st.caption("Suggestion: " + matches[0])
+
+
 
 # ── Execution ─────────────────────────────────────────────────────────────────
 if run:
