@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Generated data
+data/
+schema/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files (optional - remove these lines if you want to keep them)
+test_db.py
+test_gemini.py
+test_sql.py
